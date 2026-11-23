@@ -74,13 +74,13 @@ else
     
     # Add Docker's official GPG key:
     sudo install -m 0755 -d /etc/apt/keyrings
-    sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
+    sudo curl -fsSL https://download.docker.com/linux/debian/gpg -o /etc/apt/keyrings/docker.asc
     sudo chmod a+r /etc/apt/keyrings/docker.asc
 
     # Add the repository to Apt sources:
     sudo tee /etc/apt/sources.list.d/docker.sources <<EOF
 Types: deb
-URIs: https://download.docker.com/linux/ubuntu
+URIs: https://download.docker.com/linux/debian
 Suites: $(. /etc/os-release && echo "${UBUNTU_CODENAME:-$VERSION_CODENAME}")
 Components: stable
 Signed-By: /etc/apt/keyrings/docker.asc
@@ -95,3 +95,16 @@ EOF
     sudo usermod -aG docker $CURRENT_USER
 fi
 
+# Память - нужен свап, иначе может не хватать памяти при долгом аптайм
+add_if_missing "vm.swappiness=10"
+
+[ -f /swapfile ] && sudo swapoff /swapfile || true
+sudo rm -rf /swapfile
+
+sudo fallocate -l 500M /swapfile
+sudo chmod 600 /swapfile
+sudo mkswap /swapfile
+sudo swapon /swapfile
+if ! grep -q swapfile /etc/fstab; then
+    echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab
+fi
