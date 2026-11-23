@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Plain HTTP, redirect</title>
+  <style>
+    body {
+      background-color: #111;
+      color: #0f0;
+      font-family: "Courier New", Courier, monospace;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+    }
+    .message {
+      font-size: 18px;
+      margin-top: 10px;
+      color: #ccc;
+    }
+    a {
+      color: #0ff;
+      font-size: 16px;
+    }
+  </style>
+</head>
+<body>
+  <div class="message">
+    Redirecting to <a id="redirect-link" href="#"><span id="redirect-span">https://</span></a> 
+      in 
+    <span id="seconds"></span> ms
+  </div>
+
+  <script>
+    const seconds = document.getElementById('seconds');
+    const link = document.getElementById('redirect-link');
+    const span = document.getElementById('redirect-span');
+    const httpsUrl = 'https://' + location.hostname + location.pathname + location.search;
+
+    link.href = httpsUrl;
+    span.textContent = httpsUrl;
+
+    const WAIT_SEC = 60;
+    const FPS = 0.75;
+    let remaining = WAIT_SEC * 1000;
+
+    function tick() {
+      remaining -= Math.round(2000/FPS * (Math.random()));
+      seconds.textContent = remaining;
+      if (remaining <= 0) {
+        clearInterval(interval);
+        link.click();
+      }
+    }
+
+    const interval = setInterval(tick, 1000/FPS);
+
+    tick();
+  </script>
+</body>
+</html>

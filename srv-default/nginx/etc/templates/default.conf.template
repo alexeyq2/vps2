@@ -1,0 +1,36 @@
+user  nginx;
+worker_processes  auto;
+
+events {
+    worker_connections  1024;
+}
+
+http {
+    # Standard "combined" log_format is as follows:
+    #     
+    # log_format combined '$remote_addr - $remote_user [$time_local] '
+    #                     '"$request" $status $body_bytes_sent '
+    #                     '"$http_referer" "$http_user_agent"' ;
+
+    # Don't log remote_addr, keep privacy
+    #
+    log_format hide_client_ip '[$time_local] '
+                              '"$request" $status $body_bytes_sent '
+                              '"$http_referer" "$http_user_agent"' ;
+
+    # пусть docker занимается ротацией лог-файлов
+    access_log /dev/stdout hide_client_ip;
+    error_log /dev/stderr crit;
+
+    include       /etc/nginx/mime.types;
+    default_type  application/octet-stream;
+    sendfile on;
+    
+    include ssl_server*.conf;
+
+    server {
+        listen 80;
+        root /www/http;
+        index index.html;        
+    }
+}

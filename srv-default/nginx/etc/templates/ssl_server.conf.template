@@ -1,0 +1,46 @@
+server {
+    listen 443 ssl;
+    listen [::]:443 ssl;
+
+    server_name         $VPS_DOMAIN;
+    ssl_certificate     /etc/letsencrypt/live/$VPS_DOMAIN/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/$VPS_DOMAIN/privkey.pem;
+
+    ssl_protocols       TLSv1.2 TLSv1.3;
+    ssl_prefer_server_ciphers on;
+    ssl_ciphers         HIGH:!aNULL:!MD5;
+
+    client_max_body_size 50M;
+    
+    root /www/ssl;
+    index index.html;
+
+    # Подиска для программ-клиентов
+    # Секретный URL, требует точного совпадения (=). Отдает список ключей серверов. 
+    location = $SUBSCRIPTION_URL {
+        alias /www/subscription/ss.txt;
+        default_type text/plain;
+    }
+
+    # сюда можно положить файлы через SSH и скачивать по https://VPS_DOMAIN/FILEZ_URL/1.txt
+    location $FILEZ_URL {
+        alias /www/ssl;
+    }
+
+    # редирект на веб-шару по дефолту при заходе на https://VPS_DOMAIN
+    location / {
+        return 302 $FILEBROWSER_URL;
+
+        # или отдавать статику из /www/ssl (директива root)
+        # try_files $uri $uri/ =404;
+    }
+
+    # веб-шара
+    location $FILEBROWSER_URL {
+        proxy_pass http://filebrowser:80;
+    }
+
+    # пусть docker занимается ротацией лог-файлов
+    access_log /dev/stdout hide_client_ip;
+    error_log  /dev/stderr crit;    
+}
